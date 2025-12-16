@@ -1,0 +1,60 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_LEFT_RIGHT()
+title C4 — Component: Entrega (API/WebApp) sobre schema relatorio_controladoria
+
+' Pessoas
+Person(bu, "Usuário de Negócio", "Acessa portal e dashboards")
+
+' Consumers
+Container(app, "WebApp", "Next.js", "Interface do usuário (HTTP/JSON)")
+Container(bi,  "BI",     "Power BI", "Dashboards analíticos (DirectQuery/Import)")
+
+' API (Boundary com componentes internos)
+Container_Boundary(api_b, "Backend API (FastAPI)") {
+  Component(c_receita, "ReceitaController", "FastAPI", "Rotas /receita/*")
+  Component(c_custos,  "CustosController",  "FastAPI", "Rotas /custos/*")
+  Component(c_insight, "InsightController", "FastAPI", "Rota /insight")
+
+  Component(s_receita, "ReceitaService", "Python", "Regras de negócio de receita")
+  Component(s_custos,  "CustosService",  "Python", "Regras de negócio de custos")
+  Component(s_insight, "InsightService", "Python", "Chama provedor de IA")
+
+  Component(repo, "SqlRepository", "SQL", "Consultas de leitura em Views/MVs")
+  Component(auth, "Auth/JWT", "Middleware", "Autenticação e autorização")
+}
+
+' Dados (representados de forma simples no nível de componente)
+Component(mv, "Views/MVs do schema", "PostgreSQL", "Camada de entrega (mv_* / views)")
+
+' Serviço externo de IA (opcional)
+System_Ext(hf, "Hugging Face", "LLM de texto para insights")
+
+' Fluxo
+Rel(bu, app, "Navega")
+Rel(bu, bi,  "Consulta")
+
+Rel(app, c_receita, "HTTP")
+Rel(app, c_custos,  "HTTP")
+Rel(app, c_insight, "HTTP")
+
+Rel(c_receita, s_receita, "chama")
+Rel(c_custos,  s_custos,  "chama")
+Rel(c_insight, s_insight, "chama")
+
+Rel(s_receita, repo, "consulta")
+Rel(s_custos,  repo, "consulta")
+Rel(repo, mv, "SQL (leitura)")
+
+Rel_R(s_insight, hf, "prompt/response")
+
+' Power BI consumindo direto as Views/MVs
+Rel(bi, mv, "SQL")
+
+' Middleware
+Rel(app, auth, "token JWT")
+Rel(auth, c_receita, "valida")
+Rel(auth, c_custos,  "valida")
+Rel(auth, c_insight, "valida")
+
+@enduml

@@ -1,0 +1,45 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+LAYOUT_LEFT_RIGHT()
+title C4 — Component: ETL/ELT (Prefect) para schema relatorio_controladoria
+
+' Fontes externas
+System_Ext(erp, "ERP", "Fonte financeira")
+System_Ext(crm, "CRM", "Fonte comercial")
+System_Ext(xls, "Planilhas", "Carga manual (.xlsx)")
+
+' Boundary do Orquestrador (Prefect) com componentes de fluxo/tarefas
+Container_Boundary(orq_b, "Orquestrador (Prefect)") {
+  Component(flow_main, "Flow Principal", "Prefect", "Agenda e orquestra etapas")
+  Component(t_extract, "Task Extract", "Python", "Coleta (APIs/arquivos)")
+  Component(t_clean,   "Task Clean/Standardize", "Python", "Limpeza/padronização")
+  Component(t_load_stg,"Task Load→Staging", "SQL/Python", "Carrega tabelas intermediárias")
+  Component(t_up_core, "Task Upsert Core", "SQL", "Upsert/Merge em fato_/dim_")
+  Component(t_build_mv,"Task Build/Refresh MVs", "SQL", "Refresh da camada de entrega")
+  Component(t_notify,  "Task Notify", "Webhook/Email", "Sinalizações e logs")
+}
+
+' Alvos no DW (modelados como componentes simples aqui)
+Component(stg,  "Staging / Intermediárias", "PostgreSQL", "Tabelas de staging/tratamento")
+Component(core, "Core Fatos & Dimensões",   "PostgreSQL", "fato_* e dim_*")
+Component(mv,   "Views/MVs",                 "PostgreSQL", "mv_* / views")
+
+' Ligações (fluxo)
+Rel(erp, t_extract, "API/Export")
+Rel(crm, t_extract, "API/Export")
+Rel(xls, t_extract, "Arquivo .xlsx")
+
+Rel(flow_main, t_extract, "executa")
+Rel(t_extract, t_clean,   "dados brutos")
+Rel(t_clean, t_load_stg,  "dados tratados")
+
+Rel(t_load_stg, stg,  "INSERT/LOAD")
+Rel(flow_main, t_up_core, "executa")
+Rel(t_up_core, core, "MERGE/UPSERT")
+
+Rel(flow_main, t_build_mv, "executa")
+Rel(t_build_mv, mv, "REFRESH MATERIALIZED VIEW")
+
+Rel(flow_main, t_notify, "on success/failure")
+
+@enduml

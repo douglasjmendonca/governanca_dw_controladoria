@@ -1,0 +1,103 @@
+Table dim_tempo {
+  id_tempo int [pk]
+  data date
+  ano int
+  mes int
+  nome_mes varchar(20)
+  dia int
+}
+
+Table dim_regionais {
+  id_regional int [pk]
+  nome_regional varchar(100)
+  id_regional_imanage int
+  id_regional_protheus int
+  status varchar(20)
+}
+
+Table dim_cidades {
+  id_cidade int [pk]
+  nome_cidade varchar(120)
+  codigo_ibge varchar(20)
+  uf char(2)
+  id_cidade_imanage int
+  id_cidade_protheus int
+  status varchar(20)
+}
+
+Table dim_regional_cidade {
+  id_regcid int [pk]
+  id_cidade int
+  id_regional int
+  id_tempo int
+  vigente_de date
+  vigente_ate date [null]   // null = versão atual
+  flag_atual boolean
+}
+
+Table dim_conta {
+  id_conta int [pk]
+  conta varchar(100)
+}
+
+Table dim_detalhe {
+  id_detalhe int [pk]
+  detalhe varchar(100)
+}
+
+Table dim_item {
+  id_item int [pk]
+  item varchar(100)
+}
+
+Table dim_natureza {
+  id_natureza int [pk]
+  natureza varchar(100)
+}
+
+Table fato_lancamentos {
+  id_lancamento bigint [pk, increment]
+  id_tempo int
+  id_conta int
+  id_regcid int
+  id_detalhe int
+  id_item int
+  id_natureza int
+  data datetime
+  documento varchar(80)
+  historico varchar(255) [null]
+  observacao varchar(255) [null]
+  valor decimal(14,2)
+}
+
+Table fato_clientes{
+  id_clientes bigint [pk, increment]
+  id_tempo int
+  id_regcid int
+  data datetime
+  tipo_documento varchar(15)
+  aguardando_conexao int
+  cancelado int
+  conectado_ativo int
+  conectado_inadimplente_parcial int
+  conectado_inadimplente_total int
+  inadimplente int
+  pausado int
+  total_clientes_ativos int
+}
+
+/* --------- RELACIONAMENTOS (forma recomendada) --------- */
+Ref: dim_regional_cidade.id_cidade   > dim_cidades.id_cidade
+Ref: dim_regional_cidade.id_regional > dim_regionais.id_regional
+
+Ref: fato_lancamentos.id_tempo  > dim_tempo.id_tempo
+Ref: fato_lancamentos.id_regcid > dim_regional_cidade.id_regcid
+Ref: fato_lancamentos.id_conta  > dim_conta.id_conta
+Ref: fato_lancamentos.id_detalhe > dim_detalhe.id_detalhe
+Ref: fato_lancamentos.id_item > dim_item.id_item
+Ref: fato_lancamentos.id_natureza > dim_natureza.id_natureza
+
+Ref: dim_tempo.id_tempo < dim_regional_cidade.id_tempo
+
+Ref: fato_clientes.id_tempo > dim_tempo.id_tempo
+Ref: fato_clientes.id_regcid > dim_regional_cidade.id_regcid

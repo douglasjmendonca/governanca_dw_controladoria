@@ -1,0 +1,49 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title C4: Contexto — Schema relatorio_controladoria no DW
+
+' Pessoas
+Person(bu, "Usuário de Negócio", "Consome análises/dashboards")
+Person(ds, "Equipe da Controladoria", "Desenvolve e agenda pipelines")
+
+' Limite do Data Warehouse
+System_Boundary(platform, "Plataforma de Dados") {
+
+    ' Orquestração
+  System(orc, "Orquestrador", "Prefect")
+
+  ' Sistema de foco: o schema dentro do DW
+  System_Boundary(dw, "DW Master (PostgreSQL)"){
+  System(rc, "Schema: relatorio_controladoria", "Fatos, dimensões, intermediárias, MVs/Views")
+  }
+}
+' Camadas de entrega (múltiplas aplicações)
+  System(bi, "BI", "Power BI")
+  System(api, "Backend",   "FastAPI")
+  System(app, "WebAPP", "Aplicação Web")
+
+
+' Sistemas fonte (fora do DW)
+System(erp, "ERP - Protheus")
+System(crm, "CRM - Imanager")
+System(xls, "Planilhas Excel (carga manual)")
+
+' --------- Fluxo de processo ponta a ponta ----------
+Rel(erp, orc, "dumps/APIs")
+Rel(crm, orc, "dumps/APIs")
+Rel(xls, orc, "arquivos .xlsx")
+
+Rel(orc, rc,  "ETL/ELT (batch/agendado)")
+
+' Entregas múltiplas a partir do mesmo schema
+Rel(rc, bi,  "DirectQuery/Import (SQL/Views/MVs)")
+Rel(rc, api,  "Consultas SQL/Views (leitura)")
+Rel(api, app, "HTTP/JSON")
+
+' Uso pelas pessoas
+Rel(bu, bi,   "Analisa dashboards")
+Rel(bu, app,  "Acessa portal/visuais")
+Rel(ds, orc,  "Cria/agenda flows")
+
+@enduml

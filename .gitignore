@@ -1,0 +1,54 @@
+# =========================
+# SEGREDOS / AMBIENTES
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# DADOS (não publicar)
+# =========================
+# Pasta de dados do pipeline (conforme sua estrutura)
+prefect_flows/pipeline_dre_lancamentos/data/arquivo_dados/
+
+# Se você usa Parquet/CSV/Excel em outras pastas, também protege:
+*.parquet
+*.csv
+*.xlsx
+*.xls
+*.db
+*.duckdb
+
+# =========================
+# OUTPUTS / ARTEFATOS
+# =========================
+docs/diagrams/*.svg
+docs/dicionario_dados/
+docs/adr/
+sql/
+utils/
+scripts/
+dimensões/
+
+# =========================
+# CACHE / BUILD (Python)
+# =========================
+__pycache__/
+*.pyc
+.venv/
+venv/
+.envrc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# =========================
+# SO
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# ARQUIVO LOCAL (não precisa versionar)
+# =========================
+comando para rodar puml.txt

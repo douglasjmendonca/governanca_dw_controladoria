@@ -1,0 +1,45 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+LAYOUT_LEFT_RIGHT()
+title C4 — Container: Schema relatorio_controladoria (DW Master)
+
+' === Atores ===
+Person(bu, "Usuário de Negócio", "Acompanha indicadores e dashboards")
+Person(ds, "Equipe de Dados", "Constrói e mantém pipelines e modelos")
+
+' === Limite principal (DW Master) ===
+System_Boundary(dw, "DW Master (PostgreSQL)") {
+
+  ' Containers internos — visão macro do schema
+  System(stg, "Staging / Intermediárias", "Limpeza e padronização de dados")
+  System(core, "Core Fatos & Dimensões", "Modelo analítico consolidado (fato_ / dim_)")
+  System(mv, "MVs / Views de Entrega", "Camada de agregação e consumo")
+}
+
+' === Sistemas externos ===
+System_Ext(orc, "Orquestrador", "Prefect — ETL/ELT")
+System_Ext(erp, "ERP", "Fonte financeira")
+System_Ext(crm, "CRM", "Fonte comercial")
+System_Ext(xls, "Planilhas", "Cargas manuais")
+
+' === Aplicações consumidoras ===
+System_Ext(bi, "BI", "Power BI — Dashboards analíticos")
+System_Ext(api, "Backend API", "FastAPI — Consumo via endpoints")
+System_Ext(app, "WebApp", "Next.js — Interface interativa")
+
+' === Fluxo principal ===
+Rel(erp, orc, "Extração de dados")
+Rel(crm, orc, "Extração de dados")
+Rel(xls, orc, "Carga manual (.xlsx)")
+Rel(orc, stg, "Transformação inicial")
+Rel(stg, core, "Modelagem analítica")
+Rel(core, mv, "Agregações e MVs")
+Rel(bi, mv, "Consulta SQL/Views")
+Rel(api, mv, "Leitura agregada")
+Rel(app, api, "Requisições HTTP/JSON")
+Rel(bu, bi, "Consome relatórios")
+Rel(bu, app, "Acessa portal de dados")
+Rel(ds, orc, "Orquestra e monitora processos")
+
+@enduml
