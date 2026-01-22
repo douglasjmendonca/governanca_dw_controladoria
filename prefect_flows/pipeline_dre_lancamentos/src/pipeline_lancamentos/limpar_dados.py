@@ -35,8 +35,16 @@ MAPEAMENTO_CIDADES = {
     "SAPUCAI MIRIM": "SAPUCAI-MIRIM",
     "UNAI REGIONAL": "UNAI",
     "VARGINHA REGIONAL": "VARGINHA",
+    "MONTES CLAROS REGIONAL": "MONTES CLAROS",
 }
 
+# === Cidades conhecidas sem match na dim_cidades (exclusão controlada) ===
+CIDADES_EXCLUIR_SEM_MATCH = {
+    "CONGONHAL",
+    "SAO TOME DAS LETRAS",
+    "CAXAMBU",
+    "AXIS TELECOM",
+}
 
 def remover_acentos(texto: str) -> str:
     """Remove acentos de uma string (NFKD -> ASCII)."""
@@ -137,6 +145,22 @@ def limpar_dados():
             f"{linhas_sem_match} linhas ficaram sem id_cidade após o join. "
             f"Cidades sem match: {cidades_sem_match}"
         )
+    
+    # === Exclusão controlada de cidades conhecidas sem match ===
+    mask_excluir = (
+        df["id_cidade"].isna()
+        & df["CIDADE APÓS RATEIO"].isin(CIDADES_EXCLUIR_SEM_MATCH)
+    )
+
+    qtd_excluir = mask_excluir.sum()
+
+    if qtd_excluir > 0:
+        logger.warning(
+            f"Removendo {qtd_excluir} linhas de cidades conhecidas sem match: "
+            f"{sorted(CIDADES_EXCLUIR_SEM_MATCH)}"
+        )
+
+        df = df.loc[~mask_excluir].copy()
 
     # Não precisamos mais da coluna auxiliar do join
     df.drop(columns=["nome_cidade_norm"], inplace=True)
